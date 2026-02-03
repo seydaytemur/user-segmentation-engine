@@ -9,6 +9,10 @@ app = FastAPI()
 # Custom exception handler to return 400 Bad Request for validation errors
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Custom exception handler for validation errors.
+    Returns a 400 Bad Request instead of the default 422 Unprocessable Entity.
+    """
     return JSONResponse(
         status_code=400,
         content={"error": str(exc)},
@@ -16,6 +20,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 # User Model
 class User(BaseModel):
+    """
+    User model representing the user attributes to be evaluated.
+    """
     id: str
     level: int = Field(ge=0)
     country: str = Field(min_length=1)
@@ -26,11 +33,18 @@ class User(BaseModel):
 
 # Request Model for POST /evaluate
 class EvaluateRequest(BaseModel):
+    """
+    Request model for the evaluate endpoint.
+    Contains the user data and the dictionary of segment rules.
+    """
     user: User
     segments: Dict[str, str]
 
 @app.get("/evaluate")
 async def get_evaluate():
+    """
+    Serves the test HTML page for manual testing of the API.
+    """
     return FileResponse("test.html")
 
 import pandas as pd
@@ -39,6 +53,15 @@ import re
 
 @app.post("/evaluate")
 async def post_evaluate(request: EvaluateRequest):
+    """
+    Evaluates the provided user against a set of segment rules.
+
+    Args:
+        request (EvaluateRequest): The request body containing user data and segment rules.
+
+    Returns:
+        dict: A dictionary of boolean results for each segment rule.
+    """
     # Convert user model to dictionary/DataFrame
     try:
         user_data = request.user.model_dump()
